@@ -136,6 +136,8 @@ erDiagram
 - 음식을 `consumed`/`discarded`로 처리하면 아직 `pending`인 알림은 `skipped`로 바꾼다. 소비기한을 수정하면 `pending` 알림을 다시 계산한다.
 - RLS: `profiles`, `notification_settings`, `device_tokens`, `food_items`, `food_analyses`, `notifications`는 `user_id = auth.uid()`인 행만 접근한다. `food_icons`는 전체 읽기만 허용하고, 쓰기는 앱에서 하지 않는다 (마이그레이션/대시보드로만 관리).
 - 아이콘은 우선 `food_icons` 카탈로그에서 매칭하는 방식으로 설계했다. AI가 사진마다 새 아이콘을 생성하는 방식으로 바꾸려면 `food_items`에 `icon_path`(생성 이미지 Storage 경로)를 추가한다 (TODO: 방식 확정).
+- 마이그레이션은 `app/supabase/migrations/`에 있다 (스키마 → 함수/트리거 → RLS/Storage 순). 가입 시 `profiles`/`notification_settings`는 트리거가 만들고, `food_items` 등록/수정과 알림 설정 변경 시 `notifications`는 트리거가 자동으로 다시 예약한다. 앱에서 `notifications`, `food_analyses`에 직접 쓰지 않는다.
+- 사진은 비공개 Storage 버킷 `food-photos`에 `{user_id}/{파일명}` 경로로 올린다.
 - 관리자(admins) 테이블과 관리자 사이트는 앱 완성 후에 설계한다.
 
 ### 푸시 알림 규칙 (추천)
