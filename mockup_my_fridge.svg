@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 430 884" width="430" height="884" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif">
+  <defs>
+    <clipPath id="screen"><rect x="0" y="0" width="390" height="844" rx="40"/></clipPath>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.12"/>
+    </filter>
+
+    <!-- 귀여운 얼굴 (공통) -->
+    <g id="face">
+      <circle cx="-7" cy="0" r="2.6" fill="#3b2a2a"/>
+      <circle cx="7" cy="0" r="2.6" fill="#3b2a2a"/>
+      <path d="M-4 6 q4 4 8 0" stroke="#3b2a2a" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <circle cx="-13" cy="6" r="3.6" fill="#FF9AA2" opacity="0.75"/>
+      <circle cx="13" cy="6" r="3.6" fill="#FF9AA2" opacity="0.75"/>
+    </g>
+
+    <!-- 아이콘들: 기준점(0,0) = 선반 위 바닥 중앙 -->
+    <g id="apple">
+      <circle cx="0" cy="-26" r="26" fill="#FF6B6B"/>
+      <ellipse cx="-13" cy="-38" rx="4" ry="7" fill="#fff" opacity="0.45" transform="rotate(25 -13 -38)"/>
+      <path d="M0 -51 q2 -9 7 -12" stroke="#7a4b2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <ellipse cx="11" cy="-60" rx="8" ry="4" fill="#6BCB77" transform="rotate(-25 11 -60)"/>
+      <use href="#face" x="0" y="-26"/>
+    </g>
+    <g id="milk">
+      <rect x="-20" y="-52" width="40" height="52" rx="6" fill="#fff" stroke="#BBD3E8" stroke-width="2"/>
+      <polygon points="-20,-52 -13,-64 13,-64 20,-52" fill="#8EC5FF" stroke="#6FAEEA" stroke-width="2" stroke-linejoin="round"/>
+      <rect x="-20" y="-14" width="40" height="8" fill="#8EC5FF" opacity="0.6"/>
+      <use href="#face" x="0" y="-32" transform="translate(0 0) scale(0.85)" />
+    </g>
+    <g id="cheese">
+      <polygon points="-32,0 32,0 32,-34 -32,-14" fill="#FFD166" stroke="#E0A82E" stroke-width="2" stroke-linejoin="round"/>
+      <circle cx="18" cy="-20" r="4" fill="#F4B942"/>
+      <circle cx="-22" cy="-7" r="3" fill="#F4B942"/>
+      <use href="#face" x="0" y="-12" transform="scale(0.8)" />
+    </g>
+    <g id="carrot">
+      <path d="M-15 -52 L15 -52 L0 -2 Z" fill="#FF9F43" stroke="#E5822A" stroke-width="2" stroke-linejoin="round"/>
+      <ellipse cx="-7" cy="-60" rx="4" ry="9" fill="#6BCB77" transform="rotate(-20 -7 -60)"/>
+      <ellipse cx="0" cy="-62" rx="4" ry="10" fill="#4CAF50"/>
+      <ellipse cx="7" cy="-60" rx="4" ry="9" fill="#6BCB77" transform="rotate(20 7 -60)"/>
+      <use href="#face" x="0" y="-38" transform="scale(0.75)"/>
+    </g>
+    <g id="tomato">
+      <circle cx="0" cy="-24" r="25" fill="#FF5C5C"/>
+      <ellipse cx="-12" cy="-35" rx="4" ry="6" fill="#fff" opacity="0.4" transform="rotate(25 -12 -35)"/>
+      <polygon points="-11,-46 0,-41 11,-46 5,-50 0,-57 -5,-50" fill="#4CAF50" stroke="#3E9142" stroke-width="1.5" stroke-linejoin="round"/>
+      <use href="#face" x="0" y="-22"/>
+    </g>
+    <g id="egg">
+      <ellipse cx="0" cy="-27" rx="20" ry="27" fill="#FFF3D6" stroke="#E8D3A3" stroke-width="2"/>
+      <use href="#face" x="0" y="-26" transform="scale(0.9)"/>
+    </g>
+    <g id="broccoli">
+      <rect x="-9" y="-26" width="18" height="26" rx="4" fill="#9BD77A"/>
+      <circle cx="-15" cy="-38" r="14" fill="#4CAF50"/>
+      <circle cx="15" cy="-38" r="14" fill="#4CAF50"/>
+      <circle cx="0" cy="-48" r="16" fill="#5DBB63"/>
+      <use href="#face" x="0" y="-36" transform="scale(0.8)"/>
+    </g>
+    <g id="cake-dummy"/>
+  </defs>
+
+  <!-- 폰 프레임 -->
+  <rect x="5" y="5" width="420" height="874" rx="58" fill="#2B2B33"/>
+  <g transform="translate(20 20)">
+    <g clip-path="url(#screen)">
+      <rect width="390" height="844" fill="#FFF6EC"/>
+
+      <!-- 상태바 -->
+      <text x="32" y="30" font-size="15" font-weight="700" fill="#3b2a2a">9:41</text>
+      <rect x="150" y="10" width="90" height="26" rx="13" fill="#2B2B33"/>
+      <rect x="318" y="19" width="26" height="12" rx="3" fill="none" stroke="#3b2a2a" stroke-width="1.5"/>
+      <rect x="320" y="21" width="17" height="8" rx="2" fill="#3b2a2a"/>
+
+      <!-- 푸시 알림 배너 -->
+      <g filter="url(#shadow)">
+        <rect x="18" y="50" width="354" height="68" rx="18" fill="#fff"/>
+      </g>
+      <rect x="32" y="64" width="40" height="40" rx="11" fill="#FFE3E3"/>
+      <g transform="translate(52 98) scale(0.5)"><use href="#apple"/></g>
+      <text x="84" y="80" font-size="12" fill="#9a8a8a">먹어도 돼? · 지금</text>
+      <text x="84" y="100" font-size="15" font-weight="700" fill="#3b2a2a">사과 소비기한이 1일 남았어요!</text>
+
+      <!-- 타이틀 -->
+      <text x="26" y="160" font-size="24" font-weight="800" fill="#3b2a2a">나의 냉장고</text>
+      <rect x="290" y="140" width="76" height="28" rx="14" fill="#FFE3E3"/>
+      <text x="328" y="159" font-size="13" font-weight="700" fill="#E4577A" text-anchor="middle">음식 10개</text>
+
+      <!-- 냉장고 본체 -->
+      <rect x="45" y="182" width="300" height="548" rx="30" fill="#D9EEF7" stroke="#9CC9DA" stroke-width="3"/>
+      <rect x="60" y="197" width="270" height="518" rx="18" fill="#F4FBFE"/>
+      <!-- 냉장고 손잡이/조명 -->
+      <rect x="150" y="204" width="90" height="8" rx="4" fill="#FFF3B0"/>
+
+      <!-- 선반 -->
+      <rect x="60" y="336" width="270" height="7" fill="#BFE0EE"/>
+      <rect x="60" y="456" width="270" height="7" fill="#BFE0EE"/>
+      <rect x="60" y="576" width="270" height="7" fill="#BFE0EE"/>
+      <!-- 서랍 -->
+      <rect x="60" y="583" width="270" height="132" rx="0" fill="#E4F4FA"/>
+      <rect x="60" y="583" width="270" height="132" fill="none"/>
+      <text x="72" y="600" font-size="11" font-weight="700" fill="#7FB3C8">채소칸</text>
+
+      <!-- 1단 -->
+      <use href="#apple" x="110" y="336"/>
+      <use href="#milk" x="195" y="336"/>
+      <use href="#cheese" x="280" y="336"/>
+      <!-- 2단 -->
+      <use href="#carrot" x="110" y="456"/>
+      <use href="#tomato" x="195" y="456"/>
+      <use href="#egg" x="280" y="456"/>
+      <!-- 3단 -->
+      <use href="#broccoli" x="110" y="576"/>
+      <use href="#apple" x="195" y="576"/>
+      <use href="#milk" x="280" y="576"/>
+      <!-- 서랍 -->
+      <use href="#carrot" x="140" y="708"/>
+      <use href="#broccoli" x="250" y="708"/>
+
+      <!-- D-day 뱃지 -->
+      <g font-size="11" font-weight="800" fill="#fff" text-anchor="middle">
+        <g transform="translate(130 262)"><rect x="-19" y="-10" width="38" height="19" rx="9.5" fill="#FF5C5C"/><text y="4">D-1</text></g>
+        <g transform="translate(215 262)"><rect x="-19" y="-10" width="38" height="19" rx="9.5" fill="#FF9F43"/><text y="4">D-3</text></g>
+        <g transform="translate(305 280)"><rect x="-19" y="-10" width="38" height="19" rx="9.5" fill="#4CAF50"/><text y="4">D-7</text></g>
+
+        <g transform="translate(130 382)"><rect x="-19" y="-10" width="38" height="19" rx="9.5" fill="#4CAF50"/><text y="4">D-6</text></g>
+        <g transform="translate(215 392)"><rect x="-19" y="-10" width="38" height="19" rx="9.5" fill="#FF9F43"/><text y="4">D-2</text></g>
+        <g transform="translate(300 386)"><rect x="-24" y="-10" width="48" height="19" rx="9.5" fill="#FF3B5C"/><text y="4">D-DAY</text></g>
+
+        <g transform="translate(135 496)"><rect x="-19" y="-10" width="38" height="19" rx="9.5" fill="#FF9F43"/><text y="4">D-3</text></g>
+        <g transform="translate(220 506)"><rect x="-19" y="-10" width="38" height="19" rx="9.5" fill="#4CAF50"/><text y="4">D-9</text></g>
+        <g transform="translate(305 504)"><rect x="-21" y="-10" width="42" height="19" rx="9.5" fill="#4CAF50"/><text y="4">D-12</text></g>
+
+        <g transform="translate(165 636)"><rect x="-19" y="-10" width="38" height="19" rx="9.5" fill="#4CAF50"/><text y="4">D-8</text></g>
+        <g transform="translate(275 628)"><rect x="-19" y="-10" width="38" height="19" rx="9.5" fill="#FF9F43"/><text y="4">D-5</text></g>
+      </g>
+
+      <!-- 하단 탭바 -->
+      <rect x="0" y="758" width="390" height="86" fill="#fff"/>
+      <line x1="0" y1="758" x2="390" y2="758" stroke="#F0E4D8" stroke-width="1.5"/>
+      <g font-size="11" text-anchor="middle" font-weight="700">
+        <!-- 홈 -->
+        <path d="M65 786 l14 -12 l14 12 v14 h-9 v-8 h-10 v8 h-9 z" fill="#CFC3B8"/>
+        <text x="79" y="822" fill="#B7AA9E">홈</text>
+        <!-- 나의 냉장고 (활성) -->
+        <rect x="171" y="772" width="24" height="34" rx="6" fill="#FF7A9A"/>
+        <rect x="171" y="787" width="24" height="2" fill="#fff"/>
+        <rect x="175" y="777" width="2.5" height="7" rx="1" fill="#fff"/>
+        <rect x="175" y="792" width="2.5" height="9" rx="1" fill="#fff"/>
+        <text x="183" y="822" fill="#E4577A">나의 냉장고</text>
+        <!-- 촬영 -->
+        <circle cx="311" cy="789" r="14" fill="none" stroke="#CFC3B8" stroke-width="3"/>
+        <circle cx="311" cy="789" r="5" fill="#CFC3B8"/>
+        <text x="311" y="822" fill="#B7AA9E">촬영</text>
+      </g>
+      <rect x="140" y="832" width="110" height="5" rx="2.5" fill="#2B2B33"/>
+    </g>
+  </g>
+</svg>
