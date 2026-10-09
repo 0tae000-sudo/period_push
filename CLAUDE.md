@@ -38,10 +38,10 @@
 ### 주요 기능과 데이터
 
 1. 회원이 음식 사진을 찍어 Storage에 업로드하고 `food_items` 행을 만든다.
-2. 사진 속 음식은 귀여운 아이콘(`food_icons`)으로 변환되어 저장된다.
+2. 사진 속 음식은 귀여운 아이콘(`food_icons`)으로 변환되어 저장된다. 아직 없는 음식의 아이콘은 AI(Gemini)로 생성해 카탈로그에 쌓는다.
 3. 사진에서 소비기한을 파악해 `food_items.expiry_date`에 저장한다.
 4. 소비기한 전에 푸시 알림을 보낸다 (아래 알림 규칙 참고).
-5. "나의 냉장고" 탭은 냉장고 이미지 위에 아이콘들을 선반/칸 위치대로 배치해 보여준다 (`shelf_no`, `slot_no`).
+5. "나의 냉장고" 탭은 냉장고 이미지 위에 아이콘들을 보여준다. 위치는 DB에 저장하지 않고 앱이 목록을 소비기한 임박순으로 정렬해 자동 배치한다.
 
 ### 앱 이름과 탭 구조
 
@@ -63,7 +63,8 @@ erDiagram
     profiles ||--o{ device_tokens : "FCM 토큰"
     profiles ||--o{ food_items : "보유 음식"
     food_icons ||--o{ food_items : "표시 아이콘"
-    food_items ||--o| food_analyses : "AI 분석 결과"
+    profiles ||--o{ food_analyses : "분석 요청"
+    food_analyses ||--o| food_items : "확인 후 저장(analysis_id)"
     food_items ||--o{ notifications : "알림 예약/이력"
     profiles ||--o{ notifications : "수신자"
 
@@ -93,29 +94,34 @@ erDiagram
         text key UK "예: apple, milk"
         text name_ko "사과, 우유"
         text category "과일 | 채소 | 육류 | 유제품 등"
-        text image_url "귀여운 아이콘 이미지"
+        text image_url "아이콘 이미지 (생성 중에는 null)"
+        text source "preset | generated"
+        text status "ready | generating | failed"
         int default_shelf_life_days "기한 추정 실패 시 기본값"
+        timestamptz created_at
     }
     food_items {
         uuid id PK
         uuid user_id FK
         uuid icon_id FK
+        uuid analysis_id FK, UK "저장의 근거가 된 AI 분석 (nullable)"
         text name "분석된 음식명"
         text photo_path "Storage 원본 사진"
         date expiry_date "소비기한"
         text expiry_source "ocr | ai_estimate | manual"
         text storage_type "fridge | freezer"
-        int shelf_no "냉장고 선반 번호"
-        int slot_no "선반 내 위치"
         text status "active | consumed | discarded"
         timestamptz created_at
         timestamptz closed_at "소비/폐기 처리 시각"
     }
     food_analyses {
         uuid id PK
-        uuid food_item_id FK, UK
+        uuid user_id FK
+        text photo_path "분석한 사진 (Storage)"
+        text status "success | no_food | multiple_foods | failed"
         text model "사용한 AI 모델"
-        jsonb raw_result "원본 응답"
+        text prompt_version
+        jsonb raw_result "정리된 AI 결과 + 토큰 사용량"
         numeric confidence
         timestamptz created_at
     }
@@ -134,11 +140,25 @@ erDiagram
 
 - `notifications`에 `(food_item_id, days_before)` UNIQUE 제약을 둬서 같은 알림이 중복 발송되지 않게 한다.
 - 음식을 `consumed`/`discarded`로 처리하면 아직 `pending`인 알림은 `skipped`로 바꾼다. 소비기한을 수정하면 `pending` 알림을 다시 계산한다.
-- RLS: `profiles`, `notification_settings`, `device_tokens`, `food_items`, `food_analyses`, `notifications`는 `user_id = auth.uid()`인 행만 접근한다. `food_icons`는 전체 읽기만 허용하고, 쓰기는 앱에서 하지 않는다 (마이그레이션/대시보드로만 관리).
-- 아이콘은 우선 `food_icons` 카탈로그에서 매칭하는 방식으로 설계했다. AI가 사진마다 새 아이콘을 생성하는 방식으로 바꾸려면 `food_items`에 `icon_path`(생성 이미지 Storage 경로)를 추가한다 (TODO: 방식 확정).
-- 마이그레이션은 `app/supabase/migrations/`에 있다 (스키마 → 함수/트리거 → RLS/Storage 순). 가입 시 `profiles`/`notification_settings`는 트리거가 만들고, `food_items` 등록/수정과 알림 설정 변경 시 `notifications`는 트리거가 자동으로 다시 예약한다. 앱에서 `notifications`, `food_analyses`에 직접 쓰지 않는다.
+- RLS: `profiles`, `notification_settings`, `device_tokens`, `food_items`, `food_analyses`, `notifications`는 `user_id = auth.uid()`인 행만 접근한다. `food_icons`는 전체 읽기만 허용하고, 쓰기는 앱에서 하지 않는다 (서버 함수와 마이그레이션만).
+- 마이그레이션은 `app/supabase/migrations/`에 있다 (스키마 → 함수/트리거 → RLS/Storage 순). 가입 시 `profiles`/`notification_settings`는 트리거가 만들고, `food_items` 등록/수정과 알림 설정 변경 시 `notifications`는 트리거가 자동으로 다시 예약한다. 앱에서 `notifications`, `food_analyses`, `food_icons`에 직접 쓰지 않는다.
 - 사진은 비공개 Storage 버킷 `food-photos`에 `{user_id}/{파일명}` 경로로 올린다.
 - 관리자(admins) 테이블과 관리자 사이트는 앱 완성 후에 설계한다.
+
+### 사진 분석 흐름 (촬영 탭)
+
+1. 카메라로 음식을 찍는다 → 긴 변 약 1024px로 줄여 Storage(`food-photos/{user_id}/…`)에 업로드한다.
+2. Edge Function이 Gemini로 사진을 분석하고 `food_analyses`에 한 행을 기록한다. 결과는 음식 이름, 아이콘 key, 소비기한, `expiry_source`(포장지 날짜면 `ocr`, 추정이면 `ai_estimate`), 음식 개수 판정이다. 날짜가 애매하면 null로 두고 사용자가 입력한다.
+3. 앱은 결과를 **수정 가능한 입력창**에 채워 보여준다. 사용자가 확인하면 `food_items`가 생성되고 (`analysis_id` 연결), 알림은 트리거가 예약한다.
+4. 음식 개수 판정: **같은 종류는 1개, 다른 종류가 섞이면 여러 개**로 본다. 여러 개이면 `status = multiple_foods`로 기록하고 경고창과 함께 재촬영을 요청한다. 음식이 아니면 `no_food`. 분석이 연속으로 실패하면 **"직접 입력하기"** 버튼을 보여준다.
+5. 분석 요청은 `food_analyses`에 남으므로 사용자별 하루 호출 한도를 여기서 센다 (재촬영 포함).
+6. API 키는 앱에 넣지 않고 Edge Function에서만 사용한다.
+
+### 아이콘 생성 (혼합 방식)
+
+- 흔한 음식 약 30개는 같은 스타일로 미리 만들어 `food_icons`에 넣는다 (`source = preset`).
+- 카탈로그에 없는 음식은 AI가 표준 이름(key)을 반환하고, 서버 함수가 `food_icons`에 `generating` 행을 만든 뒤 Gemini로 이미지를 생성해 공개 버킷 `food-icons`에 저장한다 (`source = generated`, `status = ready`). 같은 key가 있으면 재사용하고, 동시 생성은 `key` unique로 막는다.
+- 생성되는 동안 앱은 카테고리별 기본 아이콘을 보여주고, 완료되면 교체한다.
 
 ### 푸시 알림 규칙 (추천)
 
