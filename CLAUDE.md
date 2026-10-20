@@ -33,7 +33,9 @@
 
 ### 인증
 
-- 회원은 **이메일/비밀번호**로 가입하고 로그인한다. (카카오, 구글 소셜 로그인은 제거했다. 필요해지면 다시 추가한다.)
+- 회원은 **이메일/비밀번호** 또는 **카카오 로그인**으로 가입하고 로그인한다. (구글 로그인은 제거했다.)
+- **카카오 로그인은 구현만 해 두고 비활성화 상태다** (`app/src/constants/features.ts`의 `FEATURES.kakaoLogin = false`). 출시 단계에서 개발 빌드로 확인한 뒤 켠다. iOS는 소셜 로그인을 넣으면 Apple 로그인도 요구될 수 있으니 심사 가이드라인(4.8)을 확인한다. Expo Go에서는 돌아올 주소가 매번 달라 `localhost`로 빠지는 문제가 있었다.
+- 카카오 로그인: `app/src/lib/oauth.ts`(폰은 인증 브라우저 + PKCE 코드 교환, 웹은 페이지 이동 후 자동 교환), `app/src/lib/crypto-polyfill.ts`(RN에 없는 WebCrypto 보완), `app/src/app/auth/callback.tsx`(딥링크 복귀 처리). 카카오 앱은 비즈 앱으로 전환했고 동의항목은 닉네임(필수), 프로필 사진(선택), 이메일(선택)이다. Supabase Providers → Kakao에 REST API 키와 클라이언트 시크릿을 넣고 "Allow users without an email"을 켠다. Redirect URLs에 `caneatthis://**`, `exp://**`(Expo Go), 웹 테스트용 `http://localhost:8081/**`가 필요하다. 카카오는 이메일을 선택 동의로 받아서 사용자가 거부하면 이메일이 없고, 이메일 가입 계정과 자동으로 합쳐지지 않을 수 있다.
 - 구조: `AuthProvider`(`app/src/contexts/auth-context.tsx`)가 세션을 관리하고, 루트 `_layout.tsx`의 `Stack.Protected`가 로그인 여부에 따라 `login` ↔ `(tabs)`를 자동 전환한다. 로그인/가입 화면은 `app/src/app/login.tsx`, 에러 메시지 한글화는 `app/src/lib/auth-errors.ts`.
 - Supabase 대시보드의 Providers → Email에서 가입 시 이메일 인증을 켤지 정한다. 켜면 가입 직후 세션이 없고 인증 메일의 링크를 눌러야 한다. 메일 링크는 Site URL로 이동하므로 개발 중에는 꺼 두는 편이 편하다.
 - 비밀번호 찾기: 링크 방식이 아니라 **메일로 받은 숫자 코드를 앱에 입력하는 방식**이다 (`app/src/app/forgot-password.tsx`). `resetPasswordForEmail` → `verifyOtp({ type: 'recovery' })` → `updateUser({ password })` 순서이며, 변경이 끝나기 전에는 `isResettingPassword`로 탭 화면 전환을 막는다. 대시보드의 Authentication → Emails → Reset password 템플릿에 `{{ .Token }}`이 들어 있어야 코드가 메일에 표시된다.

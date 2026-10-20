@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { FEATURES } from '@/constants/features';
 import { useAuth } from '@/contexts/auth-context';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -24,12 +25,13 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default function LoginScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { signInWithEmail, signUpWithEmail } = useAuth();
+  const { signInWithEmail, signUpWithEmail, signInWithKakao } = useAuth();
 
   const [mode, setMode] = useState<Mode>('signIn');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [busy, setBusy] = useState(false);
+  // 진행 중인 작업: 버튼별로 로딩 표시를 하고 중복 탭을 막는다
+  const [busy, setBusy] = useState<'kakao' | 'email' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -39,6 +41,23 @@ export default function LoginScreen() {
     setMode(isSignUp ? 'signIn' : 'signUp');
     setError(null);
     setNotice(null);
+  };
+
+  const handleKakao = async () => {
+    if (busy) return;
+    setBusy('kakao');
+    setError(null);
+    setNotice(null);
+    try {
+      const result = await signInWithKakao();
+      if (result.error) setError(result.error);
+    } catch {
+      setError('로그인에 실패했어요. 다시 시도해 주세요.');
+    } finally {
+      // 어떤 경우에도 버튼이 로딩 상태로 멈춰 있지 않게 한다
+      setBusy(null);
+    }
+    // 성공하면 세션이 생기면서 화면이 자동으로 탭 화면으로 바뀐다
   };
 
   const handleEmail = async () => {
@@ -53,7 +72,7 @@ export default function LoginScreen() {
       return;
     }
 
-    setBusy(true);
+    setBusy('email');
     setError(null);
     setNotice(null);
     if (isSignUp) {
@@ -71,7 +90,7 @@ export default function LoginScreen() {
       const result = await signInWithEmail(trimmedEmail, password);
       if (result.error) setError(result.error);
     }
-    setBusy(false);
+    setBusy(null);
   };
 
   const inputStyle = [
@@ -95,6 +114,34 @@ export default function LoginScreen() {
                 {'사진 한 장으로 소비기한을 챙겨요'}
               </ThemedText>
             </View>
+
+            {FEATURES.kakaoLogin ? (
+              <>
+                <View style={styles.section}>
+                  <Pressable
+                    accessibilityRole="button"
+                    disabled={busy !== null}
+                    onPress={handleKakao}
+                    style={({ pressed }) => [styles.button, styles.kakao, pressed && styles.pressed]}>
+                    {busy === 'kakao' ? (
+                      <ActivityIndicator color="#191919" />
+                    ) : (
+                      <ThemedText type="smallBold" style={styles.kakaoText}>
+                        카카오 로그인
+                      </ThemedText>
+                    )}
+                  </Pressable>
+                </View>
+
+                <View style={styles.dividerRow}>
+                  <View style={[styles.dividerLine, { backgroundColor: theme.backgroundSelected }]} />
+                  <ThemedText type="small" themeColor="textSecondary">
+                    또는 이메일로
+                  </ThemedText>
+                  <View style={[styles.dividerLine, { backgroundColor: theme.backgroundSelected }]} />
+                </View>
+              </>
+            ) : null}
 
             <View style={styles.section}>
               <TextInput
@@ -137,10 +184,10 @@ export default function LoginScreen() {
 
               <Pressable
                 accessibilityRole="button"
-                disabled={busy}
+                disabled={busy !== null}
                 onPress={handleEmail}
                 style={({ pressed }) => [styles.button, styles.primary, pressed && styles.pressed]}>
-                {busy ? (
+                {busy === 'email' ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <ThemedText type="smallBold" style={styles.primaryText}>
@@ -204,6 +251,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: Spacing.three,
     paddingHorizontal: Spacing.three,
+  },
+  kakao: {
+    backgroundColor: '#FEE500',
+  },
+  kakaoText: {
+    color: '#191919',
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  dividerLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
   },
   primary: {
     backgroundColor: '#FF7A9A',

@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { AppState } from 'react-native';
 
 import { ALREADY_REGISTERED_MESSAGE, isAlreadyRegistered, toKoreanAuthMessage } from '@/lib/auth-errors';
+import { signInWithKakao as signInWithKakaoOAuth } from '@/lib/oauth';
 import { supabase } from '@/lib/supabase';
 
 type AuthResult = { error: string | null };
@@ -15,6 +16,7 @@ type AuthContextValue = {
   isResettingPassword: boolean;
   signInWithEmail: (email: string, password: string) => Promise<AuthResult>;
   signUpWithEmail: (email: string, password: string) => Promise<SignUpResult>;
+  signInWithKakao: () => Promise<AuthResult>;
   requestPasswordReset: (email: string) => Promise<AuthResult>;
   resetPasswordWithCode: (email: string, code: string, newPassword: string) => Promise<AuthResult>;
   signOut: () => Promise<void>;
@@ -68,6 +70,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null, needsEmailConfirmation: !data.session, alreadyRegistered: false };
   }, []);
 
+  const signInWithKakao = useCallback(() => signInWithKakaoOAuth(), []);
+
   // 가입 여부가 드러나지 않도록 화면에서는 성공/실패와 관계없이 같은 안내를 보여준다 (요청 횟수 제한 오류만 예외).
   const requestPasswordReset = useCallback(async (email: string): Promise<AuthResult> => {
     const { error } = await supabase.auth.resetPasswordForEmail(email);
@@ -107,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isResettingPassword,
       signInWithEmail,
       signUpWithEmail,
+      signInWithKakao,
       requestPasswordReset,
       resetPasswordWithCode,
       signOut,
@@ -117,6 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isResettingPassword,
       signInWithEmail,
       signUpWithEmail,
+      signInWithKakao,
       requestPasswordReset,
       resetPasswordWithCode,
       signOut,

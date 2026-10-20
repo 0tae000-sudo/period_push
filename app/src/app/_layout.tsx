@@ -36,6 +36,7 @@ function RootNavigator() {
         <Stack.Screen name="login" />
         <Stack.Screen name="forgot-password" />
       </Stack.Protected>
+      <Stack.Screen name="auth/callback" />
     </Stack>
   );
 }

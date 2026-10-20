@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#FFE9EE"/>
+  <circle cx="256" cy="256" r="236" fill="#FFD3DD" opacity="0.65"/>
+  <!-- 그림자 -->
+  <ellipse cx="256" cy="448" rx="112" ry="14" fill="#E58AA0" opacity="0.45"/>
+  <!-- 사과 몸통 -->
+  <path d="M256 172 C200 132 108 160 108 292 C108 392 188 452 256 430 C324 452 404 392 404 292 C404 160 312 132 256 172 Z" fill="#FF5A5F"/>
+  <ellipse cx="168" cy="248" rx="22" ry="46" fill="#fff" opacity="0.38" transform="rotate(22 168 248)"/>
+  <!-- 꼭지와 잎 -->
+  <path d="M256 174 C256 142 262 114 282 90" stroke="#7A4B2A" stroke-width="15" fill="none" stroke-linecap="round"/>
+  <ellipse cx="322" cy="100" rx="48" ry="23" fill="#6BCB77" transform="rotate(-28 322 100)"/>
+  <path d="M290 112 Q320 98 352 84" stroke="#4CAF50" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.7"/>
+  <!-- 얼굴 -->
+  <circle cx="206" cy="302" r="15" fill="#3B2A2A"/>
+  <circle cx="306" cy="302" r="15" fill="#3B2A2A"/>
+  <circle cx="211" cy="296" r="5" fill="#fff"/>
+  <circle cx="311" cy="296" r="5" fill="#fff"/>
+  <path d="M234 338 Q256 362 278 338" stroke="#3B2A2A" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <circle cx="168" cy="338" r="21" fill="#FFB3B8" opacity="0.85"/>
+  <circle cx="344" cy="338" r="21" fill="#FFB3B8" opacity="0.85"/>
+  <!-- 반짝이 -->
+  <path d="M96 110 l8 22 l22 8 l-22 8 l-8 22 l-8 -22 l-22 -8 l22 -8 z" fill="#fff" opacity="0.85"/>
+  <path d="M424 396 l6 16 l16 6 l-16 6 l-6 16 l-6 -16 l-16 -6 l16 -6 z" fill="#fff" opacity="0.85"/>
+</svg>
