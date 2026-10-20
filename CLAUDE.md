@@ -26,14 +26,18 @@
 | Language      | TypeScript                                     |
 | Database      | Supabase (PostgreSQL)                          |
 | DB 클라이언트 | `@supabase/supabase-js`                        |
-| 인증          | Supabase Auth (카카오 / 구글 / 이메일)         |
+| 인증          | Supabase Auth (이메일/비밀번호)                |
 | 푸시 알림     | FCM — Android/iOS 공용                         |
 
 ## 핵심 도메인
 
 ### 인증
 
-- 회원은 **카카오톡 소셜 로그인 / 구글 소셜 로그인 / 이메일**으로만 가입한다.
+- 회원은 **이메일/비밀번호**로 가입하고 로그인한다. (카카오, 구글 소셜 로그인은 제거했다. 필요해지면 다시 추가한다.)
+- 구조: `AuthProvider`(`app/src/contexts/auth-context.tsx`)가 세션을 관리하고, 루트 `_layout.tsx`의 `Stack.Protected`가 로그인 여부에 따라 `login` ↔ `(tabs)`를 자동 전환한다. 로그인/가입 화면은 `app/src/app/login.tsx`, 에러 메시지 한글화는 `app/src/lib/auth-errors.ts`.
+- Supabase 대시보드의 Providers → Email에서 가입 시 이메일 인증을 켤지 정한다. 켜면 가입 직후 세션이 없고 인증 메일의 링크를 눌러야 한다. 메일 링크는 Site URL로 이동하므로 개발 중에는 꺼 두는 편이 편하다.
+- 비밀번호 찾기: 링크 방식이 아니라 **메일로 받은 숫자 코드를 앱에 입력하는 방식**이다 (`app/src/app/forgot-password.tsx`). `resetPasswordForEmail` → `verifyOtp({ type: 'recovery' })` → `updateUser({ password })` 순서이며, 변경이 끝나기 전에는 `isResettingPassword`로 탭 화면 전환을 막는다. 대시보드의 Authentication → Emails → Reset password 템플릿에 `{{ .Token }}`이 들어 있어야 코드가 메일에 표시된다.
+- DB의 `profiles.provider`는 마이그레이션상 `kakao | google | email`을 허용하는 상태로 남아 있다 (지금은 항상 `email`).
 
 ### 주요 기능과 데이터
 
@@ -45,7 +49,7 @@
 
 ### 앱 이름과 탭 구조
 
-앱 이름은 **Can I eat this?** (한글 표기: 먹어도 돼?). 하단 탭은 4개이며 라우트는 `app/src/app/`에 있다.
+앱 이름은 **먹어도 돼?** (영문 이름: Can I eat this?, 프로젝트 slug와 딥링크 scheme은 영문 `can-i-eat-this`, `caneatthis`를 유지한다). 하단 탭은 4개이며 라우트는 `app/src/app/`에 있다.
 
 | 탭          | 라우트         | 내용                                  |
 | ----------- | -------------- | ------------------------------------- |
@@ -153,6 +157,13 @@ erDiagram
 4. 음식 개수 판정: **같은 종류는 1개, 다른 종류가 섞이면 여러 개**로 본다. 여러 개이면 `status = multiple_foods`로 기록하고 경고창과 함께 재촬영을 요청한다. 음식이 아니면 `no_food`. 분석이 연속으로 실패하면 **"직접 입력하기"** 버튼을 보여준다.
 5. 분석 요청은 `food_analyses`에 남으므로 사용자별 하루 호출 한도를 여기서 센다 (재촬영 포함).
 6. API 키는 앱에 넣지 않고 Edge Function에서만 사용한다.
+
+구현 위치:
+- 앱: `app/src/lib/food-analysis.ts` (리사이즈 → 업로드 → 함수 호출), `app/src/app/camera.tsx` (화면)
+- 서버: `app/supabase/functions/analyze-food/index.ts`, 프롬프트와 응답 검증은 `app/supabase/functions/_shared/analysis.ts`
+- Gemini `generateContent` REST를 쓰고, 모델은 시크릿 `GEMINI_MODEL`(기본 `gemini-3.5-flash-lite`)로 바꾼다. 시크릿: `GEMINI_API_KEY`, `GEMINI_MODEL`, `ANALYSIS_DAILY_LIMIT`(기본 30).
+- 분석 결과(성공/음식 없음/여러 개/실패)는 항상 HTTP 200 + `status`로 돌려주고, 인증 오류·잘못된 요청·한도 초과(429)만 에러 코드로 응답한다.
+- 소비기한을 못 구하면 카탈로그 아이콘의 `default_shelf_life_days`로 추정한다. 카탈로그에 없는 아이콘 key는 그대로 돌려주고, 아이콘 생성은 별도 단계에서 처리한다.
 
 ### 아이콘 생성 (혼합 방식)
 

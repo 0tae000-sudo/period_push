@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Can I eat this?",
+    "name": "먹어도 돼?",
     "slug": "can-i-eat-this",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -20,7 +20,7 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
@@ -31,6 +31,15 @@
           "backgroundColor": "#208AEF",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "음식 사진을 찍어 소비기한을 분석하기 위해 카메라가 필요해요.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": false
         }
       ]
     ],
