@@ -6,6 +6,7 @@ import {
   TabTriggerSlotProps,
   TabListProps,
 } from 'expo-router/ui';
+import type { ComponentProps } from 'react';
 import { Pressable, View, StyleSheet } from 'react-native';
 
 import { ThemedText } from './themed-text';
@@ -39,7 +40,8 @@ export default function AppTabs() {
 
 export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps) {
   return (
-    <Pressable {...props} style={({ pressed }) => pressed && styles.pressed}>
+    // SDK 58의 타입에서 ref 타입이 서로 맞지 않아 형 변환한다 (런타임 동작은 같다)
+    <Pressable {...(props as unknown as ComponentProps<typeof Pressable>)} style={({ pressed }) => pressed && styles.pressed}>
       <ThemedView
         type={isFocused ? 'backgroundSelected' : 'backgroundElement'}
         style={styles.tabButtonView}>

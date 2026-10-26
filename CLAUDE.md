@@ -22,7 +22,7 @@
 
 | 항목          | 기술                                           |
 | ------------- | ---------------------------------------------- |
-| Framework     | Expo (React Native), Expo Router               |
+| Framework     | Expo SDK 58 (React Native 0.88), Expo Router   |
 | Language      | TypeScript                                     |
 | Database      | Supabase (PostgreSQL)                          |
 | DB 클라이언트 | `@supabase/supabase-js`                        |
