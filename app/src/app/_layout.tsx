@@ -4,6 +4,7 @@ import { useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AuthProvider, useAuth } from '@/contexts/auth-context';
+import { FoodDraftProvider } from '@/contexts/food-draft-context';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -12,8 +13,10 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AuthProvider>
-        <AnimatedSplashOverlay />
-        <RootNavigator />
+        <FoodDraftProvider>
+          <AnimatedSplashOverlay />
+          <RootNavigator />
+        </FoodDraftProvider>
       </AuthProvider>
     </ThemeProvider>
   );
@@ -31,6 +34,8 @@ function RootNavigator() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={isSignedIn}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="register-food" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="date-scan" options={{ presentation: 'fullScreenModal' }} />
       </Stack.Protected>
       <Stack.Protected guard={!isSignedIn}>
         <Stack.Screen name="login" />

@@ -1,6 +1,6 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Image } from 'expo-image';
-import { useIsFocused } from 'expo-router';
+import { useIsFocused, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,6 +8,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, Spacing } from '@/constants/theme';
+import { EMPTY_DRAFT, useFoodDraft } from '@/contexts/food-draft-context';
 import { showAlert } from '@/lib/alert';
 import { AnalysisError, analyzePhoto } from '@/lib/food-analysis';
 
@@ -17,6 +18,8 @@ const MANUAL_ENTRY_AFTER_FAILURES = 2;
 export default function CameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const isFocused = useIsFocused();
+  const router = useRouter();
+  const { startDraft } = useFoodDraft();
   // 하단 탭바 위로 컨트롤을 띄운다: 홈 인디케이터 영역 + 탭바 높이 + 여백
   const insets = useSafeAreaInsets();
   const controlsBottom = insets.bottom + BottomTabInset + Spacing.four;
@@ -24,8 +27,11 @@ export default function CameraScreen() {
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [photo, setPhoto] = useState<{ uri: string; width: number; height: number } | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [failureCount, setFailureCount] = useState(0);
+  // 가장 최근 분석 기록. "직접 입력하기"로 넘어갈 때 올려 둔 사진을 함께 쓰려고 기억해 둔다.
+  const lastAnalysisRef = useRef<{ analysisId: string; photoPath: string } | null>(null);
+  // 분석 요청 번호. 분석 중에 "다시 찍기"를 누르면 번호가 바뀌어서 늦게 도착한 옛 결과는 무시한다.
+  const requestIdRef = useRef(0);
 
   // 권한 상태를 아직 모르는 동안
   if (!permission) {
@@ -47,7 +53,10 @@ export default function CameraScreen() {
     try {
       // 업로드 전 리사이즈는 분석 단계에서 처리한다 (긴 변 약 1024px)
       const picture = await cameraRef.current.takePictureAsync({ quality: 0.8 });
-      setPhoto({ uri: picture.uri, width: picture.width, height: picture.height });
+      const taken = { uri: picture.uri, width: picture.width, height: picture.height };
+      setPhoto(taken);
+      // 사진을 확인하는 단계 없이 바로 분석을 시작한다 (잘못 찍었으면 다시 찍기를 누르면 된다)
+      startAnalysis(taken);
     } catch {
       showAlert('사진을 찍지 못했어요', '잠시 후 다시 시도해 주세요.');
     } finally {
@@ -55,11 +64,20 @@ export default function CameraScreen() {
     }
   };
 
-  const retake = () => setPhoto(null);
+  const retake = () => {
+    requestIdRef.current += 1;
+    setPhoto(null);
+  };
 
-  // TODO: 수정 가능한 입력창 화면으로 연결한다 (빈 입력창으로 시작)
+  // 빈 입력창으로 등록 화면을 연다. 이미 올린 사진이 있으면 함께 쓴다.
   const enterManually = () => {
-    showAlert('준비 중이에요', '직접 입력 화면은 다음 단계에서 연결할 예정이에요.');
+    startDraft({
+      ...EMPTY_DRAFT,
+      analysisId: lastAnalysisRef.current?.analysisId ?? null,
+      photoPath: lastAnalysisRef.current?.photoPath ?? null,
+    });
+    setPhoto(null);
+    router.push('/register-food');
   };
 
   // 성공하지 못한 경우: 안내하고 다시 찍게 한다. 연속 실패가 쌓이면 직접 입력을 권한다.
@@ -75,20 +93,32 @@ export default function CameraScreen() {
     ]);
   };
 
-  const usePhoto = async () => {
-    if (!photo || isAnalyzing) return;
-    setIsAnalyzing(true);
+  const startAnalysis = async (target: { uri: string; width: number; height: number }) => {
+    const requestId = ++requestIdRef.current;
+    const isCurrent = () => requestId === requestIdRef.current;
+    lastAnalysisRef.current = null;
     try {
-      const analysis = await analyzePhoto(photo);
+      const analysis = await analyzePhoto(target);
+      if (!isCurrent()) return; // 그 사이 다시 찍기를 눌렀다
+      lastAnalysisRef.current = { analysisId: analysis.analysisId, photoPath: analysis.photoPath };
       if (analysis.status === 'success' && analysis.result) {
         setFailureCount(0);
-        // TODO: 결과를 수정 가능한 입력창에 채워서 보여준다. 지금은 확인용으로만 표시한다.
-        const { name, expiry_date, expiry_source, icon_key } = analysis.result;
-        showAlert(
-          '분석 결과 (임시)',
-          `${name}\n소비기한: ${expiry_date ?? '알 수 없음'} (${expiry_source ?? '-'})\n아이콘: ${icon_key ?? '-'}`,
-          [{ text: '확인', onPress: retake }],
-        );
+        // 분석 결과를 등록 화면에 채워서 보여준다. 날짜를 못 읽었으면 날짜 칸이 비어 있다.
+        const r = analysis.result;
+        startDraft({
+          analysisId: analysis.analysisId,
+          photoPath: analysis.photoPath,
+          icon: r.icon,
+          iconKey: r.icon_key,
+          category: r.category,
+          name: r.name,
+          expiryDate: r.expiry_date,
+          expiryOrigin: r.expiry_date ? (r.expiry_source ?? 'ai_estimate') : null,
+          reason: r.reason,
+          storageType: r.storage_type,
+        });
+        setPhoto(null);
+        router.push('/register-food');
       } else if (analysis.status === 'multiple_foods') {
         handleFailure('음식이 여러 개 보여요', '한 번에 한 가지 음식만 찍어 주세요.');
       } else if (analysis.status === 'no_food') {
@@ -97,6 +127,7 @@ export default function CameraScreen() {
         handleFailure('분석에 실패했어요', '잠시 후 다시 시도해 주세요.');
       }
     } catch (e) {
+      if (!isCurrent()) return;
       const code = e instanceof AnalysisError ? e.code : 'request_failed';
       if (code === 'not_signed_in') {
         showAlert('로그인이 필요해요', '로그인한 뒤에 음식을 등록할 수 있어요.');
@@ -108,8 +139,6 @@ export default function CameraScreen() {
       } else {
         handleFailure('분석 중 문제가 생겼어요', '네트워크를 확인하고 다시 시도해 주세요.');
       }
-    } finally {
-      setIsAnalyzing(false);
     }
   };
 
@@ -119,34 +148,20 @@ export default function CameraScreen() {
         <Image source={{ uri: photo.uri }} style={styles.flex} contentFit="cover" />
         <SafeAreaView edges={['top']} style={styles.topOverlay} pointerEvents="none">
           <ThemedText type="smallBold" style={styles.overlayText}>
-            {isAnalyzing ? '분석하고 있어요...' : '이 사진으로 분석할까요?'}
+            음식을 살펴보고 있어요...
           </ThemedText>
         </SafeAreaView>
+        <View style={styles.centerOverlay} pointerEvents="none">
+          <ActivityIndicator color="#fff" size="large" />
+        </View>
         <View style={[styles.bottomOverlay, { bottom: controlsBottom }]}>
           <Pressable
             accessibilityRole="button"
-            disabled={isAnalyzing}
             onPress={retake}
-            style={({ pressed }) => [
-              styles.secondaryButton,
-              (pressed || isAnalyzing) && styles.pressed,
-            ]}>
+            style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}>
             <ThemedText type="smallBold" style={styles.overlayText}>
-              다시 찍기
+              취소하고 다시 찍기
             </ThemedText>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            disabled={isAnalyzing}
-            onPress={usePhoto}
-            style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}>
-            {isAnalyzing ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <ThemedText type="smallBold" style={styles.primaryButtonText}>
-                사용하기
-              </ThemedText>
-            )}
           </Pressable>
         </View>
       </View>
@@ -227,6 +242,11 @@ const styles = StyleSheet.create({
   black: {
     flex: 1,
     backgroundColor: '#000',
+  },
+  centerOverlay: {
+    ...StyleSheet.absoluteFill,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   topOverlay: {
     position: 'absolute',

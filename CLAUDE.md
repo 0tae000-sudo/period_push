@@ -47,7 +47,7 @@
 2. 사진 속 음식은 귀여운 아이콘(`food_icons`)으로 변환되어 저장된다. 아직 없는 음식의 아이콘은 AI(Gemini)로 생성해 카탈로그에 쌓는다.
 3. 사진에서 소비기한을 파악해 `food_items.expiry_date`에 저장한다.
 4. 소비기한 전에 푸시 알림을 보낸다 (아래 알림 규칙 참고).
-5. "나의 냉장고" 탭은 냉장고 이미지 위에 아이콘들을 보여준다. 위치는 DB에 저장하지 않고 앱이 목록을 소비기한 임박순으로 정렬해 자동 배치한다. 냉장고 그림은 `app/assets/images/fridge.png`(원본 `design/fridge.svg`)이고, 5개 선반 x 5칸(25개)의 위치는 `app/src/constants/fridge-layout.ts`의 `getFridgeSlot(index)`로 구한다. 그림을 다시 그리면 이 좌표도 함께 맞춘다.
+5. "나의 냉장고" 탭은 냉장고 이미지 위에 아이콘들을 보여준다. 위치는 DB에 저장하지 않고 앱이 목록을 소비기한 임박순으로 정렬해 자동 배치한다. 냉장고 그림은 `app/assets/images/fridge.png`(원본 `design/fridge.svg`)이고, 5개 선반 x 5칸(25개)의 위치는 `app/src/constants/fridge-layout.ts`의 `getFridgeSlot(index)`로 구한다. 그림을 다시 그리면 이 좌표도 함께 맞춘다. 등록한 음식은 `useFridgeItems`(`app/src/hooks/use-fridge-items.ts`)가 `status = active`인 것을 소비기한 임박순으로 불러와 선반 위에 놓고(최대 25개), 각 아이콘 위에 D-day 배지(임박할수록 빨강, 여유 있으면 초록)를 보여준다. 아이콘을 누르면 상세 시트(`food-detail-sheet.tsx`)에서 "다 먹었어요"(consumed) / "버렸어요"(discarded)로 냉장고에서 뺀다.
 
 ### 앱 이름과 탭 구조
 
@@ -153,17 +153,24 @@ erDiagram
 
 ### 사진 분석 흐름 (촬영 탭)
 
-1. 카메라로 음식을 찍는다 → 긴 변 약 1024px로 줄여 Storage(`food-photos/{user_id}/…`)에 업로드한다.
+1. 카메라로 음식을 찍으면 **확인 단계 없이 바로 분석이 시작된다** (잘못 찍었으면 "취소하고 다시 찍기"). 사진은 긴 변 약 1024px로 줄여, **Storage(`food-photos/{user_id}/…`) 업로드와 서버 분석을 동시에** 진행한다. 서버 함수는 사진을 요청의 `image_base64`로 직접 받아서 Storage에서 다시 내려받지 않는다 (없으면 내려받는 방식으로 대체).
 2. Edge Function이 Gemini로 사진을 분석하고 `food_analyses`에 한 행을 기록한다. 결과는 음식 이름, 아이콘 key, 소비기한, `expiry_source`(포장지 날짜면 `ocr`, 추정이면 `ai_estimate`), 음식 개수 판정이다. 날짜가 애매하면 null로 두고 사용자가 입력한다.
-3. 앱은 결과를 **수정 가능한 입력창**에 채워 보여준다. 사용자가 확인하면 `food_items`가 생성되고 (`analysis_id` 연결), 알림은 트리거가 예약한다.
+3. 앱은 결과를 **등록 화면**(`app/src/app/register-food.tsx`)에 채워 보여준다. 항상 이 화면을 거치며(자동 등록 없음), 제품명과 소비기한을 수정할 수 있다. 사용자가 "냉장고에 넣기"를 누르면 `food_items`가 생성되고 (`analysis_id` 연결), 알림은 트리거가 예약한다.
+   - 소비기한 표시: 포장지에서 읽음(ocr, "📷"), AI 추정(ai_estimate, "✨ AI가 예상했어요" + 이유), 직접 입력(manual, "✏️"), 못 찾음(날짜 칸 강조, 입력해야 등록 가능). 사용자가 날짜를 고치면 출처는 `manual`이 된다.
+   - 날짜 입력은 달력(iOS) / 기본 선택창(Android) / 직접 입력(웹)과 빠른 버튼(3일 뒤, 1주일 뒤, 2주일 뒤, 1개월 뒤)이다.
+   - 규칙: 제품명(최대 40자)과 소비기한은 필수, 이미 지난 날짜는 경고만 하고 등록 가능, 5년을 넘는 날짜는 막는다. 보관 위치(냉장/냉동) 선택이 있다.
+   - **날짜 부분만 다시 찍기**(`app/src/app/date-scan.tsx`): 날짜가 적힌 부분만 가까이 찍으면 서버 함수가 `mode: 'date'`로 날짜만 읽어 등록 화면의 날짜를 채운다 (`prompt_version = date-v1`, 호출 한도에 포함).
+   - 초안(촬영 결과)은 `app/src/contexts/food-draft-context.tsx`로 촬영 → 등록 → 날짜 다시 찍기 화면이 공유한다. 아이콘이 없으면 기본 아이콘(`app/assets/images/default-food-icon.png`)을 쓴다.
 4. 음식 개수 판정: **같은 종류는 1개, 다른 종류가 섞이면 여러 개**로 본다. 여러 개이면 `status = multiple_foods`로 기록하고 경고창과 함께 재촬영을 요청한다. 음식이 아니면 `no_food`. 분석이 연속으로 실패하면 **"직접 입력하기"** 버튼을 보여준다.
 5. 분석 요청은 `food_analyses`에 남으므로 사용자별 하루 호출 한도를 여기서 센다 (재촬영 포함).
 6. API 키는 앱에 넣지 않고 Edge Function에서만 사용한다.
+7. 속도: 서버가 단계별 시간(`auth_ms`, `prep_ms`, `gemini_ms`, `db_ms`, `total_ms`)을 `food_analyses.raw_result.timings`에 남기고, 개발 모드에서는 앱 터미널에 `[사진 분석 시간]`으로 찍는다. 느려지면 여기서 어느 단계가 원인인지 먼저 본다.
 
 구현 위치:
 - 앱: `app/src/lib/food-analysis.ts` (리사이즈 → 업로드 → 함수 호출), `app/src/app/camera.tsx` (화면)
 - 서버: `app/supabase/functions/analyze-food/index.ts`, 프롬프트와 응답 검증은 `app/supabase/functions/_shared/analysis.ts`
-- Gemini `generateContent` REST를 쓰고, 모델은 시크릿 `GEMINI_MODEL`(기본 `gemini-3.5-flash-lite`)로 바꾼다. 시크릿: `GEMINI_API_KEY`, `GEMINI_MODEL`, `ANALYSIS_DAILY_LIMIT`(기본 30).
+- Gemini `generateContent` REST를 쓴다. **모델은 우선순위 목록**이며 시크릿 `GEMINI_MODELS`(쉼표로 나열, 기본 `gemini-3-flash-preview,gemini-3.5-flash,gemini-3.5-flash-lite`)로 바꾼다. 앞 모델이 15초(`GEMINI_ATTEMPT_TIMEOUT_MS`) 안에 답하지 못하거나 오류(503 등)를 내면 다음 모델로 자동 전환하고, 답한 모델과 시도 내역은 `food_analyses.model`, `raw_result.attempts`에 남는다. 시크릿: `GEMINI_API_KEY`, `GEMINI_MODELS`(또는 `GEMINI_MODEL` 하나), `GEMINI_ATTEMPT_TIMEOUT_MS`, `ANALYSIS_DAILY_LIMIT`(기본 30).
+- 속도 시험 기록(2026-10): Gemini 응답이 모델과 시간대에 따라 6~33초로 크게 흔들렸다. 생각 토큰, 사진 크기(768px), 스키마, priority 등급은 효과가 없었고 서버 혼잡이 원인으로 보인다. 시험은 `app/scripts/analysis-benchmark.mjs`로 반복할 수 있다. `gemini-2.5-flash-lite`는 새 사용자에게 제공되지 않는다.
 - 분석 결과(성공/음식 없음/여러 개/실패)는 항상 HTTP 200 + `status`로 돌려주고, 인증 오류·잘못된 요청·한도 초과(429)만 에러 코드로 응답한다.
 - 소비기한을 못 구하면 카탈로그 아이콘의 `default_shelf_life_days`로 추정한다. 카탈로그에 없는 아이콘 key는 그대로 돌려주고, 아이콘 생성은 별도 단계에서 처리한다.
 

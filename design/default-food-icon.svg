@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- 아직 아이콘이 없는 음식에 보여주는 기본 아이콘: 주먹밥 -->
+  <ellipse cx="128" cy="226" rx="78" ry="10" fill="#E58AA0" opacity="0.35"/>
+  <path d="M128 36 C150 36 166 52 190 104 C208 144 220 178 214 200 C210 214 198 220 182 220 L74 220 C58 220 46 214 42 200 C36 178 48 144 66 104 C90 52 106 36 128 36 Z" fill="#FFFFFF" stroke="#8A8272" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M60 150 C66 138 74 124 80 112" stroke="#EDE6D6" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <path d="M82 170 L174 170 L186 222 L70 222 Z" fill="#3E4B40" stroke="#8A8272" stroke-width="7" stroke-linejoin="round"/>
+  <circle cx="104" cy="126" r="9" fill="#3B2A2A"/>
+  <circle cx="152" cy="126" r="9" fill="#3B2A2A"/>
+  <circle cx="107" cy="122" r="3" fill="#fff"/>
+  <circle cx="155" cy="122" r="3" fill="#fff"/>
+  <path d="M116 146 Q128 160 140 146" stroke="#3B2A2A" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <circle cx="86" cy="146" r="12" fill="#FFB3B8" opacity="0.85"/>
+  <circle cx="170" cy="146" r="12" fill="#FFB3B8" opacity="0.85"/>
+</svg>
