@@ -20,11 +20,11 @@ export default function AppTabs() {
       <TabSlot style={{ height: '100%' }} />
       <TabList asChild>
         <CustomTabList>
-          <TabTrigger name="home" href="/" asChild>
-            <TabButton>홈</TabButton>
-          </TabTrigger>
-          <TabTrigger name="fridge" href="/fridge" asChild>
+          <TabTrigger name="fridge" href="/" asChild>
             <TabButton>나의 냉장고</TabButton>
+          </TabTrigger>
+          <TabTrigger name="calendar" href="/calendar" asChild>
+            <TabButton>달력</TabButton>
           </TabTrigger>
           <TabTrigger name="camera" href="/camera" asChild>
             <TabButton>촬영</TabButton>

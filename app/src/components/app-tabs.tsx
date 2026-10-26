@@ -13,13 +13,13 @@ export default function AppTabs() {
       indicatorColor={colors.backgroundElement}
       labelStyle={{ selected: { color: colors.text } }}>
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>홈</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf={{ default: 'house', selected: 'house.fill' }} md="home" />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="fridge">
         <NativeTabs.Trigger.Label>나의 냉장고</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="refrigerator" md="kitchen" />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="calendar">
+        <NativeTabs.Trigger.Label>달력</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="calendar" md="calendar_month" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="camera">
